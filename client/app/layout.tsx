@@ -23,7 +23,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" >
+    <html lang="en">
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/rippleui@1.12.1/dist/css/styles.css"
+        precedence="default"
+      />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
