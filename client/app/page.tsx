@@ -7,7 +7,7 @@ import { Forecast, Unit } from "@/types/home";
 import axios from "axios";
 import dayjs from "dayjs";
 import advancedFormat from "dayjs/plugin/advancedFormat";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 dayjs.extend(advancedFormat);
 
@@ -70,7 +70,7 @@ export default function Home() {
     }
   };
 
-  const fetchWeather = async (cityName: string) => {
+  const fetchWeather = useCallback(async (cityName: string) => {
     try {
       const geoRes = await axios.get(
         `https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`
@@ -89,7 +89,8 @@ export default function Home() {
       setHumidity(data.current.humidity);
       setLocation(name);
 
-      const future = data.daily.slice(1, 4).map((d: any) => {
+      // Expect error due to dynamic API response structure
+      const future = data.daily.slice(1, 4).map((d: { dt: number; temp: { min: number; max: number }; weather: { main: string }[] }) => {
         return {
           date: dayjs.unix(d.dt).format("D MMM"),
           icon: getWeatherIcon(d.weather[0].main),
@@ -139,11 +140,12 @@ export default function Home() {
         },
       ]);
     }
-  };
+  },[API_KEY, unit]);
+
 
   useEffect(() => {
     fetchWeather(city);
-  }, [unit]);
+  }, [unit, city, fetchWeather]);
 
   return (
     <div className="h-screen w-full bg-white">
