@@ -28,47 +28,72 @@ const formatLinkedTemp = (tempRang: string, unit: Unit): string => {
   return `${min}-${max}`;
 };
 
+const convertWindDirection = (deg: number) => {
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return directions[Math.round(deg / 45) % 8];
+};
+
+const getWeatherIcon = (main: string): string => {
+  switch (main.toLowerCase()) {
+    case "clear":
+      return "☀️";
+    case "clouds":
+      return "☁️";
+    case "rain":
+      return "🌧️";
+    case "snow":
+      return "❄️";
+    case "thunderstorm":
+      return "⛈️";
+    case "drizzle":
+      return "🌦️";
+    case "mist":
+    case "fog":
+      return "🌫️";
+    default:
+      return "🌤️";
+  }
+};
+
+
 export default function Home() {
   const [city, setCity] = useState("Nairobi");
   const [unit, setUnit] = useState<Unit>("metric");
-  const [currentTemp, setCurrentTemp] = useState(0);
-  const [currentWeather, setCurrentWeather] = useState("");
-  const [weatherIcon, setWeatherIcon] = useState("🌤️");
-  const [windSpeed, setWindSpeed] = useState(0);
-  const [windDirection, setWindDirection] = useState("");
-  const [humidity, setHumidity] = useState(0);
-  const [forecast, setForecast] = useState<Forecast[]>([]);
+  const [currentTemp, setCurrentTemp] = useState(26);
+  const [currentWeather, setCurrentWeather] = useState("clear");
+  const [weatherIcon, setWeatherIcon] = useState(getWeatherIcon("Clear"));
+  const [windSpeed, setWindSpeed] = useState(10);
+  const [windDirection, setWindDirection] = useState("NE");
+  const [humidity, setHumidity] = useState(60);
+  const defaultForecast: Forecast[] = [
+    {
+      date: dayjs().add(1, "day").format("D MMM"),
+      icon: getWeatherIcon("Clouds"),
+      temperature: `${formatLinkedTemp("20-28", unit)}°${
+        unit === "metric" ? "C" : "F"
+      }`,
+    },
+    {
+      date: dayjs().add(2, "day").format("D MMM"),
+      icon: getWeatherIcon("Rain"),
+      temperature: `${formatLinkedTemp(`18-25`, unit)}°${
+        unit === "metric" ? "C" : "F"
+      }`,
+    },
+    {
+      date: dayjs().add(3, "day").format("D MMM"),
+      icon: getWeatherIcon("Clear"),
+      temperature: `${formatLinkedTemp("22-30", unit)}°${
+        unit === "metric" ? "C" : "F"
+      }`,
+    },
+  ]
+  const [forecast, setForecast] = useState<Forecast[]>(defaultForecast);
   const [location, setLocation] = useState("Nairobi");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(dayjs());
   const [input, setInput] = useState("");
   const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
 
-  const convertWindDirection = (deg: number) => {
-    const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-    return directions[Math.round(deg / 45) % 8];
-  };
-
-  const getWeatherIcon = (main: string): string => {
-    switch (main.toLowerCase()) {
-      case "clear":
-        return "☀️";
-      case "clouds":
-        return "☁️";
-      case "rain":
-        return "🌧️";
-      case "snow":
-        return "❄️";
-      case "thunderstorm":
-        return "⛈️";
-      case "drizzle":
-        return "🌦️";
-      case "mist":
-      case "fog":
-        return "🌫️";
-      default:
-        return "🌤️";
-    }
-  };
 
   const fetchWeather = useCallback(async (cityName: string) => {
     try {
@@ -101,44 +126,10 @@ export default function Home() {
       });
       setForecast(future);
 
-      const today = dayjs().format("Do MMMM YYYY");
+      const today = dayjs();
       setDate(today);
     } catch (error) {
       console.error("Error fetching weather:", error);
-      setCurrentTemp(26);
-      setCurrentWeather("Clear");
-      setWeatherIcon(getWeatherIcon("Clear"));
-      setWindSpeed(10);
-      setWindDirection("NE");
-      setHumidity(60);
-      setLocation(cityName);
-
-      const today = dayjs().format("Do MMMM YYYY");
-      setDate(today);
-
-      setForecast([
-        {
-          date: dayjs().add(1, "day").format("D MMM"),
-          icon: getWeatherIcon("Clouds"),
-          temperature: `${formatLinkedTemp("20-28", unit)}°${
-            unit === "metric" ? "C" : "F"
-          }`,
-        },
-        {
-          date: dayjs().add(2, "day").format("D MMM"),
-          icon: getWeatherIcon("Rain"),
-          temperature: `${formatLinkedTemp(`18-25`, unit)}°${
-            unit === "metric" ? "C" : "F"
-          }`,
-        },
-        {
-          date: dayjs().add(3, "day").format("D MMM"),
-          icon: getWeatherIcon("Clear"),
-          temperature: `${formatLinkedTemp("22-30", unit)}°${
-            unit === "metric" ? "C" : "F"
-          }`,
-        },
-      ]);
     }
   },[API_KEY, unit]);
 
@@ -150,20 +141,17 @@ export default function Home() {
   return (
     <div className="h-screen w-full bg-white">
       <div className="h-full w-full grid grid-cols-12">
-        {/* Sidebar */}
         <div className="p-5 col-span-3 pt-10 bg-muted border-r border-gray-200 flex flex-col justify-between items-center space-y-4">
           <WeatherSidebar
             weatherIcon={weatherIcon}
-            date={date}
+            date={date.format("Do MMMM YYYY")}
             location={location}
             temperature={formatTemperature(currentTemp, unit)}
             weatherType={currentWeather}
           />
         </div>
 
-        {/* Main Content */}
         <div className="p-5 col-span-9 bg-base-100 grid grid-rows-[180px,_repeat(2,_minmax(0,_1fr))] gap-5">
-          {/* Search and Unit Toggle */}
           <SearchControls
             input={input}
             unit={unit}
@@ -176,10 +164,8 @@ export default function Home() {
             }}
           />
 
-          {/* Forecast Cards */}
           <ForecastList forecast={forecast} />
 
-          {/* Weather Stats */}
           <WeatherStats
             windDirection={windDirection}
             windSpeed={windSpeed}
