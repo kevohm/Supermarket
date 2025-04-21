@@ -15,9 +15,7 @@ const convertTemperatureToF = (temp: number): number => {
   return Math.round((temp * 9) / 5 + 32);
 };
 
-const convertTemperatureToC = (temp: number): number => {
-  return Math.round(((temp - 32) * 5) / 9);
-};
+
 const formatTemperature = (temp: number, unit: string): string => {
   return unit === "imperial" ? `${convertTemperatureToF(temp)}°F` : `${temp}°C`;
 };
@@ -43,8 +41,7 @@ export default function Home() {
   const [location, setLocation] = useState("Nairobi");
   const [date, setDate] = useState("");
   const [input, setInput] = useState("");
-
-  const API_KEY = "5f6420eb0428a793647bb832132e51ae";
+  const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
 
   const convertWindDirection = (deg: number) => {
     const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
@@ -153,7 +150,13 @@ export default function Home() {
       <div className="h-full w-full grid grid-cols-12">
         {/* Sidebar */}
         <div className="p-5 col-span-3 pt-10 bg-muted border-r border-gray-200 flex flex-col justify-between items-center space-y-4">
-         <WeatherSidebar weatherIcon={weatherIcon} date={date} location={location} temperature={formatTemperature(currentTemp, unit)}  weatherType={currentWeather}/>
+          <WeatherSidebar
+            weatherIcon={weatherIcon}
+            date={date}
+            location={location}
+            temperature={formatTemperature(currentTemp, unit)}
+            weatherType={currentWeather}
+          />
         </div>
 
         {/* Main Content */}
